@@ -1,51 +1,50 @@
-import 'dotenv/config';
-import handler from './dune.js';
-
-
-// Get total transactions from Dune API
-export async function getTPS() {
-  try {
-    let responseData = null;
+// api/tps.js
+export default async function handler(req, res) {
+    // Enable CORS for external websites
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    // Create request object with hardcoded query ID
-    const req = {
-      method: 'GET',
-      query: {
-        query_id: '5636113'
+    if (req.method === 'OPTIONS') {
+      res.status(200).end();
+      return;
+    }
+  
+    if (req.method !== 'GET') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+  
+    try {
+      const response = await fetch(`https://api.dune.com/api/v1/query/5636113/results`, {
+        headers: {
+          'X-Dune-API-Key': process.env.DUNE_API_KEY,
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Dune API error');
       }
-    };
-    
-    // Create response object to capture the data
-    const res = {
-      setHeader: () => {},
-      status: (code) => ({
-        json: (data) => {
-          responseData = data;
-          return data;
-        },
-        end: () => {}
-      }),
-      json: (data) => {
-        responseData = data;
-        return data;
-      }
-    };
-    
-    // Call the handler
-    await handler(req, res);
-
-    
-    const tps = responseData.result.rows[0].latest_weekly_avg_tps;
-    const formattedTPS = Math.trunc(tps * 10)/ 10; 
-    console.log('original TPS:', tps);
-    console.log('formatted TPS (shortened by 3 positions):', formattedTPS);
-    return formattedTPS;
-    
-  } catch (error) {
-    console.error('Error calling handler:', error);
-    throw error;
+  
+      const tps = data.result.rows[0].latest_weekly_avg_tps;
+      const formattedTPS = Math.trunc(tps * 10) / 10; 
+      
+      res.status(200).json({
+        success: true,
+        data: {
+          original: tps,
+          formatted: formattedTPS,
+          label: 'Transactions Per Second (Weekly Avg)'
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error fetching TPS:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message 
+      });
+    }
   }
-}
-
-
-await getTPS();

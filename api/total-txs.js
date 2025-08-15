@@ -1,4 +1,4 @@
-// api/daus.js
+// api/total-txs.js
 export default async function handler(req, res) {
   // Enable CORS for external websites
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(`https://api.dune.com/api/v1/query/3667484/results`, {
+    const response = await fetch(`https://api.dune.com/api/v1/query/2641455/results`, {
       headers: {
         'X-Dune-API-Key': process.env.DUNE_API_KEY,
         'Content-Type': 'application/json'
@@ -28,20 +28,20 @@ export default async function handler(req, res) {
       throw new Error(data.error || 'Dune API error');
     }
 
-    const daus = data.result.rows[0].active_users_count;
-    const formattedDAUs = Math.floor(daus / 1000);
+    const totalTxs = data.result.rows[0].total_transactions;
+    const formattedTxs = Math.floor(totalTxs); // Remove everything after decimal point
     
     res.status(200).json({
       success: true,
       data: {
-        original: daus,
-        formatted: formattedDAUs,
-        label: 'Daily Active Users (K)'
+        original: totalTxs,
+        formatted: formattedTxs,
+        label: 'Total Transactions'
       }
     });
     
   } catch (error) {
-    console.error('Error fetching DAUs:', error);
+    console.error('Error fetching Total Transactions:', error);
     res.status(500).json({ 
       success: false, 
       error: error.message 
