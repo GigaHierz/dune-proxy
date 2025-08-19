@@ -1,6 +1,5 @@
-// api/tps.js
+// api/celo-tvl.js
 export default async function handler(req, res) {
-    // Enable CORS for external websites
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -10,12 +9,8 @@ export default async function handler(req, res) {
       return;
     }
   
-    if (req.method !== 'GET') {
-      return res.status(405).json({ error: 'Method not allowed' });
-    }
-  
     try {
-      const response = await fetch(`https://api.dune.com/api/v1/query/5654555/results`, {
+      const response = await fetch(`https://api.dune.com/api/v1/query/3970986/results`, {
         headers: {
           'X-Dune-API-Key': process.env.DUNE_API_KEY,
           'Content-Type': 'application/json'
@@ -28,20 +23,28 @@ export default async function handler(req, res) {
         throw new Error(data.error || 'Dune API error');
       }
   
-      const tps = data.result.rows[0].latest_weekly_avg_tps;
-      const formattedTPS = Math.trunc(tps * 10) / 10; 
+      // Filter for celo blockchain only
+      const celoData = data.result.rows.find(row => row.blockchain === 'celo');
+      
+      if (!celoData) {
+        throw new Error('Celo data not found');
+      }
+  
+      const celoTvl = celoData.daily_tvl_usd;
+      const formattedTvl = (celoTvl / 1000000).toFixed(2); // Format as millions
       
       res.status(200).json({
         success: true,
         data: {
-          original: tps,
-          formatted: formattedTPS,
-          label: 'Transactions Per Second (Weekly Avg)'
+          blockchain: 'celo',
+          original: celoTvl,
+          formatted: formattedTvl,
+          label: 'Celo Daily TVL (M USD)'
         }
       });
       
     } catch (error) {
-      console.error('Error fetching TPS:', error);
+      console.error('Error fetching Celo TVL:', error);
       res.status(500).json({ 
         success: false, 
         error: error.message 

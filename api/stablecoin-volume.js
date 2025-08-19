@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     }
   
     try {
-      const response = await fetch(`https://api.dune.com/api/v1/query/5636048/results`, {
+      const response = await fetch(`https://api.dune.com/api/v1/query/5654554/results`, {
         headers: {
           'X-Dune-API-Key': process.env.DUNE_API_KEY,
           'Content-Type': 'application/json'

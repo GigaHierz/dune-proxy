@@ -1,4 +1,4 @@
-// api/tps.js
+// api/gas-fee.js
 export default async function handler(req, res) {
     // Enable CORS for external websites
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     }
   
     try {
-      const response = await fetch(`https://api.dune.com/api/v1/query/5654555/results`, {
+      const response = await fetch(`https://api.dune.com/api/v1/query/5654549/results`, {
         headers: {
           'X-Dune-API-Key': process.env.DUNE_API_KEY,
           'Content-Type': 'application/json'
@@ -28,20 +28,20 @@ export default async function handler(req, res) {
         throw new Error(data.error || 'Dune API error');
       }
   
-      const tps = data.result.rows[0].latest_weekly_avg_tps;
-      const formattedTPS = Math.trunc(tps * 10) / 10; 
+      const avgGasFee = data.result.rows[0].avg_transaction_fee_in_usd;
+      const formattedGasFee = `$${avgGasFee.toFixed(4)}`; // Format to 4 decimal places like your example
       
       res.status(200).json({
         success: true,
         data: {
-          original: tps,
-          formatted: formattedTPS,
-          label: 'Transactions Per Second (Weekly Avg)'
+          original: avgGasFee,
+          formatted: formattedGasFee,
+          label: 'Average Transaction Fee (USD)'
         }
       });
       
     } catch (error) {
-      console.error('Error fetching TPS:', error);
+      console.error('Error fetching Gas Fee:', error);
       res.status(500).json({ 
         success: false, 
         error: error.message 
